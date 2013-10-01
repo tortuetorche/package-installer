@@ -37,7 +37,7 @@ class PackageRequireCommand extends Command {
 	 */
 	public function fire()
 	{
-		passthru('composer require ' . $this->argument('packageName'));
+		passthru('composer require ' . $this->argument('package'));
 	}
 
 	/**
@@ -48,7 +48,7 @@ class PackageRequireCommand extends Command {
 	protected function getArguments()
 	{
 		return array(
-			array('packageName', InputArgument::REQUIRED, 'Name of the composer package to be installed.'),
+			array('package', InputArgument::REQUIRED, 'Name of the composer package and its version constraint to be installed.'),
 		);
 	}
 
