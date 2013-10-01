@@ -28,6 +28,20 @@ class PackageInstallCommand extends Command {
 	protected $providerCreator;
 
 	/**
+	 * The package name
+	 *
+	 * @var string
+	 */
+	protected $packageName;
+
+	/**
+	 * The package version constraint
+	 *
+	 * @var string|null
+	 */
+	protected $packageVersion = null;
+
+	/**
 	 * Create a new command instance.
 	 *
 	 * @return void
@@ -47,11 +61,13 @@ class PackageInstallCommand extends Command {
 	 */
 	public function fire()
 	{
-		$packageName = $this->argument('packageName');
+		$package = $this->argument('package');
 		// Calls composer require
-		$this->call('package:require', compact('packageName'));
+		$this->call('package:require', compact('package'));
 
-		$path = $this->getPackagePath($packageName);
+		$this->extractPackageInfos($package);
+
+		$path = $this->getPackagePath();
 		$provider = $this->providerCreator->buildProviderFromJsonFile($path);
 
 		if (is_null($provider)) {
@@ -67,8 +83,10 @@ class PackageInstallCommand extends Command {
 	 * @param  string $packageName
 	 * @return string
 	 */
-	protected function getPackagePath($packageName)
+	protected function getPackagePath($packageName = null)
 	{
+		$packageName = $packageName ?: $this->packageName;
+
 		return base_path() . "/vendor/{$packageName}/provides.json";
 	}
 
@@ -80,8 +98,25 @@ class PackageInstallCommand extends Command {
 	protected function getArguments()
 	{
 		return array(
-			array('packageName', InputArgument::REQUIRED, 'Name of the composer package to be installed.'),
+			array('package', InputArgument::REQUIRED, 'Name of the composer package and its version constraint to be installed.'),
 		);
+	}
+
+	/**
+	 * Extract package name and version constraint from the 'package' argument
+	 * Following the composer convention:
+	 *
+	 *   foo/bar:1.0.0 or foo/bar=1.0.0 or "foo/bar 1.0.0"
+	 *
+	 * @return void
+	 */
+	protected function extractPackageInfos($packageArgument)
+	{
+		$package = preg_split("/[:= ]/", $packageArgument);
+		$this->packageName = $package[0];
+		if(array_key_exists(1, $package)) {
+			$this->packageVersion = $package[1];
+		}
 	}
 
 }
